@@ -6,30 +6,34 @@ on:
   push:
     branches: 'main'
 jobs:
-  containers:
+  test-node-service:
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
         uses: actions/checkout@v4
-      - name: docker build podinfo
-        run: |
-          docker image build -t podinfo:latest podinfo/content/
-      - name: docker build node-service
-        run: |
-          docker image build -t node-service:latest node-service/content/
-  validate-score:
-    runs-on: ubuntu-latest
-    env:
-      HUMCTL_VERSION: '*'
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v4
-      - uses: humanitec/setup-cli-action@v1
+      - name: install score-compose
+        uses: score-spec/setup-score@v3
         with:
-          version: ${{ env.HUMCTL_VERSION }}
-      - name: humctl score validate - node-service
+          file: score-compose
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+      - name: make compose-test
         run: |
-          humctl score validate --local --strict node-service/content/score.yaml
-      - name: humctl score validate - podinfo
+          cd node-service
+          make compose-test
+  test-podinfo:
+    runs-on: ubuntu-latest
+    steps:
+      steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+      - name: install score-compose
+        uses: score-spec/setup-score@v3
+        with:
+          file: score-compose
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+      - name: make compose-test
         run: |
-          humctl score validate --local --strict podinfo/content/score.yaml
+          cd podinfo
+          make compose-test
