@@ -49,6 +49,40 @@ jobs:
       - uses: humanitec/setup-cli-action@v1
         with:
           version: ${{ env.HUMCTL_VERSION }}
+      - name: humctl score validate - backstage
+        run: |
+          humctl score validate \
+            --token ${{ secrets.HUMANITEC_TOKEN }} \
+            --org ${{ vars.HUMANITEC_ORG_ID }} \
+            --strict \
+            --extensions humanitec.score.yaml \
+            score.yaml
+      - name: install score-compose
+        uses: score-spec/setup-score@v3
+        with:
+          file: score-compose
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "latest"
+      - name: make compose-up
+        run: |
+          make compose-up
+      - name: make compose-test
+        run: |
+          make compose-test
+      - name: install score-k8s
+        uses: score-spec/setup-score@v3
+        with:
+          file: score-k8s
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "latest"
+      - name: make k8s-up
+        run: |
+          make kind-create-cluster
+          make kind-load-image
+          make k8s-up
+      - name: make k8s-test
+        run: |
+          make k8s-test
       - name: Create Humanitec Env
         run: |
           humctl create environment ${{ env.ENVIRONMENT_ID }} \
@@ -156,8 +190,16 @@ jobs:
               --org ${{ vars.HUMANITEC_ORG_ID }} \
               --app ${{ env.APP_NAME }} \
               --env ${{ env.ENVIRONMENT_ID }} -o json)
+          
+          echo "#### :white_check_mark: Successfully deployed with score-compose" >> pr_message.txt
+          echo "" >> pr_message.txt
+          echo "#### :white_check_mark: Successfully deployed with score-k8s" >> pr_message.txt
+          echo "" >> pr_message.txt
+          
           if [ "$DEPLOYMENT_ERRORS" = "[]" ]; then
             echo "## Deployment successfully completed for ${{ env.ENVIRONMENT_NAME }}! :tada:" >> pr_message.txt
+            echo "" >> pr_message.txt
+            echo "#### :white_check_mark: Successfully deployed with humctl" >> pr_message.txt
             echo "" >> pr_message.txt
           else
             echo "## Deployment failed for ${{ env.ENVIRONMENT_NAME }}! :x:" >> pr_message.txt
