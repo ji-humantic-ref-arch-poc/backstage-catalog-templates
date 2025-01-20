@@ -24,9 +24,12 @@ compose.yaml: score.yaml .score-compose/state.yaml Makefile
 		--build '${CONTAINER_NAME}={"context":".","tags":["${CONTAINER_IMAGE}"]}' \
 		--override-property containers.${CONTAINER_NAME}.variables.MESSAGE="Hello, Compose!"
 
+compose.override.yaml:
+	echo '{"services":{"${WORKLOAD_NAME}-${CONTAINER_NAME}":{"read_only":"true","user":"65532","cap_drop":["ALL"]}}}' | yq e -P > compose.override.yaml
+
 ## Generate a compose.yaml file from the score spec and launch it.
 .PHONY: compose-up
-compose-up: compose.yaml
+compose-up: compose.yaml compose.override.yaml
 	docker compose up --build -d --remove-orphans
 	sleep 5
 
@@ -65,6 +68,7 @@ k8s-up: manifests.yaml
 	kubectl apply \
 		-f manifests.yaml \
 		-n ${NAMESPACE}
+	sleep 5
 	kubectl wait deployments/${WORKLOAD_NAME} \
 		-n ${NAMESPACE} \
 		--for condition=Available \
