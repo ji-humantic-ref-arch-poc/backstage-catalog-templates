@@ -67,7 +67,7 @@ k8s-up: manifests.yaml
 	kubectl apply \
 		-f manifests.yaml \
 		-n ${NAMESPACE}
-    sleep 5
+	sleep 5
 	kubectl wait deployments/${WORKLOAD_NAME} \
 		-n ${NAMESPACE} \
 		--for condition=Available \
