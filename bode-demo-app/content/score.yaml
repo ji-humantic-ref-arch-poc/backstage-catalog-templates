@@ -1,0 +1,40 @@
+apiVersion: score.dev/v1b1
+metadata:
+  name: node-workload
+containers:
+  node-service:
+    image: . # Set by pipeline
+    variables:
+      PORT: "3000"
+      DB_DATABASE: ${resources.db.name}
+      DB_USER: ${resources.db.username}
+      DB_PASSWORD: ${resources.db.password}
+      DB_HOST: ${resources.db.host}
+      DB_PORT: ${resources.db.port}
+      AZURE_BLOB_CONTAINER: ${resources.storage.container}
+      AZURE_BLOB_ACCOUNT: ${resources.storage.account}
+      STORAGE_ACCOUNT : ${values.STORAGE_ACCOUNT}
+      STORAGE_KEY : ${values.STORAGE_KEY}
+      STORAGE_CONN_STR : ${values.STORAGE_CONN_STR}
+service:
+  ports:
+    www:
+      port: 8000
+      targetPort: 8000
+
+resources:
+  db:
+    type: postgres
+  dns:
+    type: dns
+  route:
+    type: route
+    params:
+      host: ${resources.dns.host}
+      path: /
+      port: 8000
+  storage:
+    type: azure-blob
+    class: basic-admin
+  empty-dir:
+    type: volume
